@@ -59,23 +59,6 @@ namespace EBC
 class BandingEstimator : public IOptimizable
 {
 
-private:
-	class ProgressBar
-	{
-	private:
-		//bar width
-		unsigned int bw;
-		//max no iter
-		unsigned int n;
-		//current iter;
-		unsigned int curr;
-	public:
-		ProgressBar(unsigned int width);
-		void tick();
-		void setIter(unsigned int);
-		void done();
-	};
-
 protected:
 
 	BrentOptimizer* numopt;

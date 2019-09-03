@@ -28,32 +28,6 @@
 namespace EBC
 {
 
-BandingEstimator::ProgressBar::ProgressBar(unsigned int width) : bw(width) {
-}
-
-void BandingEstimator::ProgressBar::tick() {
-	curr++;
-
-	if ( (curr != n) && (curr % (n/100+1) != 0) ) return;
-
-    float ratio  =  curr/(float)n;
-    int   c      =  ratio * bw;
-
-    cout << setw(3) << (int)(ratio*100) << "% [";
-    for (int x=0; x<c; x++) cout << "=";
-    for (int x=c; x<bw; x++) cout << " ";
-    cout << "]\r" << flush;
-}
-
-void BandingEstimator::ProgressBar::setIter(unsigned int iters){
-	n = iters;
-	this->curr =0;
-	//cout << setw(3) <<  "0% [";
-}
-
-void BandingEstimator::ProgressBar::done(){
-	cout << endl;
-}
 
 BandingEstimator::BandingEstimator(Definitions::AlgorithmType at, Sequences* inputSeqs, Definitions::ModelType model ,std::vector<double> indel_params,
 		std::vector<double> subst_params, Definitions::OptimizationType ot, unsigned int rateCategories, double alpha, GuideTree* g) :
@@ -90,6 +64,11 @@ BandingEstimator::BandingEstimator(Definitions::AlgorithmType at, Sequences* inp
 				substModel = new AminoacidSubstitutionModel(dict, maths,gammaRateCategories,Definitions::aaWagModel);
 				DEBUG("Using WAG model");
 			break;
+			case Definitions::ModelType::GTR :
+			  throw HmmException("Not implemented");
+			  
+			case Definitions::ModelType::HKY85 :
+			  throw HmmException("Not implemented");
 					}
 	}
 
@@ -98,17 +77,7 @@ BandingEstimator::BandingEstimator(Definitions::AlgorithmType at, Sequences* inp
 	estimateSubstitutionParams = false;
 	estimateIndelParams = false;
 	estimateAlpha = false;
-	/*
-	estimateSubstitutionParams = subst_params.size() != substModel->getParamsNumber();
-	estimateIndelParams = indel_params.size() == 0;
 
-	DEBUG("Pairwise banding model estimator starting");
-	DEBUG("Estimate substitution parameters set to : " << estimateSubstitutionParams << " Estimate indel parameters set to : " << estimateIndelParams);
-	DEBUG("Estimate alpha set to : " << estimateAlpha << " , rate categories " << gammaRateCategories << " , alpha : " << alpha);
-
-	FileLogger::DebugLogger() << "Estimate substitution parameters set to : " << estimateSubstitutionParams << " Estimate indel parameters set to : " << estimateIndelParams << "\n";
-	FileLogger::DebugLogger() << "Estimate alpha set to : " << estimateAlpha << " , rate categories " << gammaRateCategories << " , alpha : " << alpha << "\n";
-	 */
 	//pairwise comparison mode
 	modelParams = new OptimizedModelParameters(substModel, indelModel,2, 1, estimateSubstitutionParams,
 			estimateIndelParams, estimateAlpha, true, maths);
@@ -145,15 +114,11 @@ BandingEstimator::BandingEstimator(Definitions::AlgorithmType at, Sequences* inp
 
 BandingEstimator::~BandingEstimator()
 {
-	//for(auto hmm : hmms)
-	//	delete hmm;
-	delete numopt;
-	delete modelParams;
-    delete maths;
-    //for (auto bnd : bands)
-    //	delete bnd;
-    delete indelModel;
-    delete substModel;
+  delete numopt;
+  delete modelParams;
+  delete maths;
+  delete indelModel;
+  delete substModel;
 }
 
 void BandingEstimator::optimizePairByPair()
@@ -164,8 +129,6 @@ void BandingEstimator::optimizePairByPair()
 	PairHmmCalculationWrapper* wrapper = new PairHmmCalculationWrapper();
 	double result;
 
-	ProgressBar pb(80);
-	pb.setIter(pairCount);
 
 	for(unsigned int i =0; i< pairCount; i++)
 	{
@@ -174,7 +137,7 @@ void BandingEstimator::optimizePairByPair()
 		INFO("Running pairwise calculator for sequence id " << idxs.first << " and " << idxs.second
 				<< " ,number " << i+1 <<" out of " << pairCount << " pairs" );
 		BandCalculator* bc = new BandCalculator(inputSequences->getSequencesAt(idxs.first), inputSequences->getSequencesAt(idxs.second),
-				substModel, indelModel, gt->getDistanceMatrix()->getDistance(idxs.first,idxs.second));
+				substModel, indelModel, dm->getDistance(idxs.first,idxs.second));
 		band = bc->getBand();
 		if (algorithm == Definitions::AlgorithmType::Viterbi)
 		{
@@ -217,14 +180,11 @@ void BandingEstimator::optimizePairByPair()
 		}
 		this->divergenceTimes[i] = modelParams->getDivergenceTime(0);
 
-		pb.tick();
-
 		delete band;
 		delete bc;
 		delete hmm;
 	}
 
-	pb.done();
 
 	INFO("Optimized divergence times:");
 	INFO(this->divergenceTimes);

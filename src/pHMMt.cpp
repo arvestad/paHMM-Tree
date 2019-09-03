@@ -27,10 +27,8 @@
 #include <iomanip>
 #include "heuristics/ModelEstimator.hpp"
 #include <array>
-#include <chrono>
 #include <ctime>
 
-#include "core/FileLogger.hpp"
 
 #include "core/OptimizedModelParameters.hpp"
 #include "hmm/ForwardPairHMM.hpp"
@@ -46,32 +44,16 @@ int main(int argc, char ** argv) {
 	cout << fixed << setprecision(8);
 	cerr << fixed << setprecision(8);
 
-	cout << Definitions::notice;
-
 	try
 	{
-		//Get some time statistics
-	    chrono::time_point<chrono::system_clock> start, end;
-	    start = chrono::system_clock::now();
-
 		CommandReader* cmdReader = new CommandReader(argc, argv);
-		ofstream treefile;
 		ofstream distfile;
 
-		FileLogger::start(cmdReader->getLoggingLevel(), (string(cmdReader->getInputFileName()).append(Definitions::logExt)));
-
-
-
+		INFO("Reading input sequences...");
 		IParser* parser = cmdReader->getParser();
 
 		//Remove gaps if the user provides a MSA file
 		bool removeGaps = true;
-
-		//FileLogger::DebugLogger().setCerr();
-		//FileLogger::DumpLogger().setCerr();
-		//FileLogger::InfoLogger().setCerr();
-
-		INFO("Reading input sequences...");
 
 		Sequences* inputSeqs = new Sequences(parser, cmdReader->getSequenceType(),removeGaps);
 
@@ -137,59 +119,6 @@ int main(int argc, char ** argv) {
 		}
 		distfile.close();
 
-
-		DEBUG ("Running BioNJ");
-
-		cout << "Running neighbour joining..." << endl;
-		//change bionj init here!
-		BioNJ nj(inputSeqs->getSequenceCount(), be->getOptimizedTimes(), inputSeqs);
-		//DEBUG("Final tree : " << nj.calculate());
-		string treeStr = nj.calculate();
-
-
-		INFO("Indel parameters");
-		INFO(indelParams);
-		INFO("Substitution parameters");
-		INFO(substParams);
-		INFO("Gamma parameters (alpha and rate categories)");
-		INFO(alpha << '\t' << cmdReader->getCategories());
-		INFO("Newick tree");
-		INFO(treeStr);
-
-
-		treefile.open((string(cmdReader->getInputFileName()).append(Definitions::treeExt)).c_str(),ios::out);
-		treefile << treeStr << endl;
-		treefile.close();
-
-
-		delete be;
-
-		delete tme;
-
-
-		delete inputSeqs;
-		delete parser;
-		delete cmdReader;
-
-		//ForwardPairHMM* epHMM = new ForwardPairHMM(inputSeqs);
-
-		//ViterbiPairHMM* epHMM = new ViterbiPairHMM(inputSeqs);
-		//epHMM->runViterbiAlgorithm();
-		//epHMM->runForwardAlgorithm();
-		//epHMM->getResults();
-		//delete epHMM;
-		//ForwardPairHMM* fwdHMM = new ForwardPairHMM(inputSeqs,true);
-		//fwdHMM->summarize();
-
-
-		end = chrono::system_clock::now();
-	    chrono::duration<double> elapsed_seconds = end-start;
-	    std::time_t end_time = chrono::system_clock::to_time_t(end);
-
-	    INFO("Finished computation at " << std::ctime(&end_time) << " elapsed time: " << elapsed_seconds.count() << "s\n");
-
-	    cout << "Done. Elapsed time: " << elapsed_seconds.count() << "s" << endl;
-
 	}
 	catch(HmmException& pe)
 	{
@@ -200,6 +129,5 @@ int main(int argc, char ** argv) {
 		ERROR(ex.what());
 	}
 
-	FileLogger::stop();
 	return 0;
 }
