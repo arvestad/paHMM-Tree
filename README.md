@@ -1,5 +1,7 @@
-# paHMM-Tree
-paHMM-Tree - distance-based pairwise statistical phylogenetic tree estimation using pair hidden Markov models
+# paHMM-dist
+paHMM-Tree - pairwise statistical phylogenetic distance estimation using pair hidden Markov models. 
+
+Forked from Marcin Bogusz' and Simon Whelan's paHMM-Tree project.
 
 paHMM-Tree, pronounced as 'palm tree' is a phylogenetic tree inference tool that uses the principle of pairwise statistical alignment to construct a neighbour joining trees from raw sequences.
 
